@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
@@ -21,10 +21,10 @@ public class Hospedagem {
     private String nomeHospede;
 
     @Column(nullable = false)
-    private Date dataInicio;
+    private LocalDate dataInicio;
 
     @Column(nullable = false)
-    private Date dataFinal;
+    private LocalDate dataFim;
 
     @Column(nullable = false)
     private Integer quantidadePessoas;

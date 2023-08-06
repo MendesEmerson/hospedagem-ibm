@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,10 +18,10 @@ public class HospedagemDTO {
     private String nomeHospede;
 
     @NotBlank
-    private Date dataInicio;
+    private LocalDate dataInicio;
 
     @NotBlank
-    private Date dataFinal;
+    private LocalDate dataFim;
 
     @NotBlank
     private Integer quantidadePessoas;
