@@ -3,6 +3,8 @@ package com.ibm.hospedagem.controller.exceptionHandle;
 import com.ibm.hospedagem.service.exception.ProblemDetail;
 import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
 import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemNotFoundException;
+import io.swagger.v3.oas.annotations.Hidden;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

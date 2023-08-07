@@ -2,6 +2,7 @@ package com.ibm.hospedagem.service.serviceimpl;
 
 import com.ibm.hospedagem.dto.HospedagemDTO;
 import com.ibm.hospedagem.model.Hospedagem;
+import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.repository.HospedagemRepository;
 import com.ibm.hospedagem.service.HospedagemService;
 import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
@@ -10,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,15 @@ public class HospedagemServiceImpl implements HospedagemService {
     }
 
     @Override
+    public List<HospedagemDTO> findByStatus(Status status) {
+        if(status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
+            return hospedagemRepository.findByStatus(status).stream().map(this::toDTO).toList();
+        } else {
+            throw new HospedagemBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
+        }
+    }
+
+    @Override
     public HospedagemDTO findById(Long id) {
         Hospedagem hospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Reserva com id " + id + " não encontrada"));
@@ -34,29 +45,15 @@ public class HospedagemServiceImpl implements HospedagemService {
 
     @Override
     public HospedagemDTO createHospedagem(HospedagemDTO hospedagemDTO) {
+        validarCamposObrigatorios(hospedagemDTO);
 
-        boolean verifyName = hospedagemDTO.getNomeHospede() == null || hospedagemDTO.getNomeHospede().isBlank();
-        boolean verifyDataInicio = hospedagemDTO.getDataInicio() == null;
-        boolean verifyDataFinal = hospedagemDTO.getDataFim() == null;
-        boolean verifyQuantidadePessoas = hospedagemDTO.getQuantidadePessoas() == null || hospedagemDTO.getQuantidadePessoas() <= 0;
-
-        if(verifyDataFinal) {
-            throw new HospedagemBadRequestException("O campo dataFinal deve ser preenchido");
-        }
-        if(verifyQuantidadePessoas) {
-            throw new HospedagemBadRequestException("O campo quantidadePessoas deve possuir um valor maior que 0");
-        }
-        if(verifyDataInicio) {
-            throw new HospedagemBadRequestException("O campo dataInicio deve ser preenchido");
-        }
-        if(verifyName) {
-            throw new HospedagemBadRequestException("O campo nomeHospede deve ser preenchido");
-        }
+        verificarConflitosDeDatas(null, hospedagemDTO.getDataInicio(), hospedagemDTO.getDataFim());
 
         Hospedagem newHospedagem = toEntity(hospedagemDTO);
-        newHospedagem.setStatus("CONFIRMADA");
-        Hospedagem saveHospedagem = hospedagemRepository.save(newHospedagem);
-        return toDTO(saveHospedagem);
+        newHospedagem.setStatus(Status.CONFIRMADO);
+
+        Hospedagem savedHospedagem = hospedagemRepository.save(newHospedagem);
+        return toDTO(savedHospedagem);
     }
 
     @Override
@@ -64,29 +61,32 @@ public class HospedagemServiceImpl implements HospedagemService {
         Hospedagem getHospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Reserva com id " + id + " não encontrada"));
 
-        boolean verifyName = hospedagemDTO.getNomeHospede().equals(getHospedagem.getNomeHospede());
-        boolean verifyDataInicio = hospedagemDTO.getDataInicio().equals(getHospedagem.getDataInicio());
-        boolean verifyDataFinal = hospedagemDTO.getDataFim().equals(getHospedagem.getDataFim());
-        boolean verifyStatus = hospedagemDTO.getStatus().equals(getHospedagem.getStatus());
-        boolean verifyQuantidadePessoas = hospedagemDTO.getQuantidadePessoas().equals(getHospedagem.getQuantidadePessoas());
+        validarCamposObrigatorios(hospedagemDTO);
 
-        if (verifyName && verifyStatus && verifyDataFinal && verifyDataInicio && verifyQuantidadePessoas){
-            throw new HospedagemBadRequestException("Pelo menos um atributo deve ser modificado");
+        LocalDate dataInicioNovaHospedagem = hospedagemDTO.getDataInicio();
+        LocalDate dataFimNovaHospedagem = hospedagemDTO.getDataFim();
+
+        if (!dataInicioNovaHospedagem.equals(getHospedagem.getDataInicio())
+                || !dataFimNovaHospedagem.equals(getHospedagem.getDataFim())) {
+            verificarConflitosDeDatas(id, dataInicioNovaHospedagem, dataFimNovaHospedagem);
         }
 
-        if (!verifyName) {
+        if (!hospedagemDTO.getNomeHospede().equals(getHospedagem.getNomeHospede())) {
             getHospedagem.setNomeHospede(hospedagemDTO.getNomeHospede());
         }
-        if (!verifyDataInicio) {
+        if (!hospedagemDTO.getDataInicio().equals(getHospedagem.getDataInicio())) {
             getHospedagem.setDataInicio(hospedagemDTO.getDataInicio());
         }
-        if(verifyDataFinal) {
+        if (!hospedagemDTO.getDataFim().equals(getHospedagem.getDataFim())) {
             getHospedagem.setDataFim(hospedagemDTO.getDataFim());
         }
-        if(!verifyStatus) {
-            getHospedagem.setStatus(hospedagemDTO.getStatus());
+        if (!hospedagemDTO.getStatus().equals(getHospedagem.getStatus())) {
+            Status newStatus = hospedagemDTO.getStatus();
+            if (newStatus == Status.CONFIRMADO || newStatus == Status.PENDENTE) {
+                getHospedagem.setStatus(newStatus);
+            }
         }
-        if(!verifyQuantidadePessoas){
+        if (!hospedagemDTO.getQuantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
             getHospedagem.setQuantidadePessoas(hospedagemDTO.getQuantidadePessoas());
         }
 
@@ -94,6 +94,8 @@ public class HospedagemServiceImpl implements HospedagemService {
 
         return toDTO(getHospedagem);
     }
+
+
 
     @Override
     public void deleteById(Long id) {
@@ -123,4 +125,27 @@ public class HospedagemServiceImpl implements HospedagemService {
                 hospedagemDTO.getStatus()
         );
     }
+
+    private void validarCamposObrigatorios(HospedagemDTO hospedagemDTO) {
+        if (hospedagemDTO.getNomeHospede() == null || hospedagemDTO.getNomeHospede().isBlank()
+                || hospedagemDTO.getDataInicio() == null
+                || hospedagemDTO.getDataFim() == null
+                || hospedagemDTO.getQuantidadePessoas() == null || hospedagemDTO.getQuantidadePessoas() <= 0) {
+            throw new HospedagemBadRequestException("Campos obrigatórios não preenchidos corretamente");
+        }
+    }
+
+    private void verificarConflitosDeDatas(Long id, LocalDate dataInicio, LocalDate dataFim) {
+        List<Hospedagem> hospedagensConflitantes = hospedagemRepository.findByDataInicioBetweenOrDataFimBetween(
+                dataInicio, dataFim, dataInicio, dataFim);
+
+        hospedagensConflitantes.removeIf(hospedagemConflitante -> hospedagemConflitante.getId().equals(id));
+
+        for (Hospedagem hospedagemConflitante : hospedagensConflitantes) {
+            if (hospedagemConflitante.getStatus() != Status.CANCELADO) {
+                throw new HospedagemBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
+            }
+        }
+    }
+
 }

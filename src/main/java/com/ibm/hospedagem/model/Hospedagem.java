@@ -1,17 +1,19 @@
 package com.ibm.hospedagem.model;
 
+import com.ibm.hospedagem.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Hospedagem {
+public class Hospedagem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +31,8 @@ public class Hospedagem {
     @Column(nullable = false)
     private Integer quantidadePessoas;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private Status status;
+
 }
