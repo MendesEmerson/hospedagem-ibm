@@ -29,6 +29,10 @@ public class HospedagemServiceImpl implements HospedagemService {
 
     @Override
     public List<HospedagemDTO> findByStatus(Status status) {
+        if (status == null) {
+            throw new HospedagemBadRequestException("O valor não pode ser nulo");
+        }
+
         if(status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
             return hospedagemRepository.findByStatus(status).stream().map(this::toDTO).toList();
         } else {
@@ -45,6 +49,7 @@ public class HospedagemServiceImpl implements HospedagemService {
 
     @Override
     public HospedagemDTO createHospedagem(HospedagemDTO hospedagemDTO) {
+
         validarCamposObrigatorios(hospedagemDTO);
 
         verificarConflitosDeDatas(null, hospedagemDTO.getDataInicio(), hospedagemDTO.getDataFim());
@@ -60,6 +65,10 @@ public class HospedagemServiceImpl implements HospedagemService {
     public HospedagemDTO updateById(Long id, HospedagemDTO hospedagemDTO) {
         Hospedagem getHospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Reserva com id " + id + " não encontrada"));
+
+        if (getHospedagem.getStatus().equals(Status.CANCELADO)) {
+            throw new HospedagemBadRequestException("Reserva cancelada, não é possivel fazer alterações em reservas que foram canceladas no sistema");
+        }
 
         validarCamposObrigatorios(hospedagemDTO);
 
@@ -98,10 +107,12 @@ public class HospedagemServiceImpl implements HospedagemService {
 
 
     @Override
-    public void deleteById(Long id) {
+    public HospedagemDTO deleteById(Long id) {
         Hospedagem hospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
-        hospedagemRepository.deleteById(hospedagem.getId());
+        hospedagem.setStatus(Status.CANCELADO);
+        return toDTO(hospedagem);
+        //hospedagemRepository.deleteById(hospedagem.getId());
     }
 
     private HospedagemDTO toDTO(Hospedagem hospedagem) {

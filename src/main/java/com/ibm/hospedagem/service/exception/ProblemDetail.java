@@ -3,7 +3,7 @@ package com.ibm.hospedagem.service.exception;
 
 import lombok.*;
 
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProblemDetail {

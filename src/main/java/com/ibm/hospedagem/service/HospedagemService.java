@@ -12,6 +12,6 @@ public interface HospedagemService {
     HospedagemDTO findById(Long id);
     HospedagemDTO createHospedagem(HospedagemDTO hospedagemDTO);
     HospedagemDTO updateById(Long id, HospedagemDTO hospedagemDTO);
-    void deleteById(Long id);
+    HospedagemDTO deleteById(Long id);
 
 }
