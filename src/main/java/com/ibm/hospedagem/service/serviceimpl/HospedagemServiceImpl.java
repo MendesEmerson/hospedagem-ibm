@@ -179,6 +179,13 @@ public class HospedagemServiceImpl implements HospedagemService {
     }
 
     private void verificarConflitosDeDatas(Long id, LocalDate dataInicio, LocalDate dataFim) {
+
+        LocalDate dataAtual = LocalDate.now();
+
+        if (dataInicio.isBefore(dataAtual)) {
+            throw new HospedagemBadRequestException("A data de início não pode ser anterior à data atual.");
+        }
+
         if (dataInicio.isAfter(dataFim)) {
             throw new HospedagemBadRequestException("A data de início não pode ser posterior à data de término.");
         }
