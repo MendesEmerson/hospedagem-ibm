@@ -16,11 +16,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/reservas")
 @AllArgsConstructor
+@CrossOrigin
 public class HospedagemController {
 
     @Autowired
@@ -44,6 +46,8 @@ public class HospedagemController {
         return ResponseEntity.ok(allHospedagens);
     }
 
+    @Operation(summary = "Buscar reservas por Status")
+    @ApiResponse(responseCode = "200", description = "Sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = HospedagemDTO.class)))
     @GetMapping("/status/{status}")
     ResponseEntity<List<HospedagemDTO>> findHospedagensByStatus(@PathVariable String status) {
         Status enumStatus = Status.fromValue(status);
@@ -51,7 +55,7 @@ public class HospedagemController {
         return ResponseEntity.ok(allHospedagensByStatus);
     }
 
-    @Operation(summary = "Buscar reservar por ID")
+    @Operation(summary = "Buscar reserva por ID")
     @ApiResponse(responseCode = "200", description = "Sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = HospedagemDTO.class)))
     @GetMapping("/{id}")
     ResponseEntity<HospedagemDTO> findHospedagemById(@PathVariable Long id) {
@@ -72,7 +76,14 @@ public class HospedagemController {
     @DeleteMapping("/{id}/cancelar")
     ResponseEntity<HospedagemDTO> deleteHospedagemById(@PathVariable Long id) {
         HospedagemDTO hospedagemDelete = hospedagemService.deleteById(id);
-       return ResponseEntity.ok(hospedagemDelete);
+        return ResponseEntity.ok(hospedagemDelete);
+    }
+
+    @Operation(summary = "Buscar dias indisponiveis para reserva")
+    @GetMapping("/calendario")
+    ResponseEntity<List<LocalDate>> findDiasIndisponiveis() {
+        List<LocalDate> diasIndisponiveis = hospedagemService.findDiasIndisponiveis();
+        return ResponseEntity.ok(diasIndisponiveis);
     }
 
 

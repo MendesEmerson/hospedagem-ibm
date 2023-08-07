@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,27 @@ public class HospedagemServiceImpl implements HospedagemService {
         } else {
             throw new HospedagemBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
         }
+    }
+
+    @Override
+    public List<LocalDate> findDiasIndisponiveis() {
+        List<Hospedagem> hospedagens = hospedagemRepository.findAll();
+
+        List<LocalDate> diasIndisponiveis = new ArrayList<>();
+
+        for (Hospedagem hospedagem : hospedagens) {
+            if (hospedagem.getStatus() != Status.CANCELADO) {
+                LocalDate dataInicio = hospedagem.getDataInicio();
+                LocalDate dataFim = hospedagem.getDataFim();
+
+                while (!dataInicio.isAfter(dataFim)) {
+                    diasIndisponiveis.add(dataInicio);
+                    dataInicio = dataInicio.plusDays(1);
+                }
+            }
+        }
+
+        return diasIndisponiveis;
     }
 
     @Override
