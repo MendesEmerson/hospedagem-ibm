@@ -113,6 +113,11 @@ public class HospedagemServiceImpl implements HospedagemService {
     public HospedagemDTO deleteById(Long id) {
         Hospedagem hospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
+
+        if (hospedagem.getStatus().equals(Status.CANCELADO)) {
+            throw new HospedagemBadRequestException("Essa reserva já esta cancelada no sistema");
+        }
+
         hospedagem.setStatus(Status.CANCELADO);
         hospedagemRepository.save(hospedagem);
 
@@ -152,6 +157,14 @@ public class HospedagemServiceImpl implements HospedagemService {
     }
 
     private void verificarConflitosDeDatas(Long id, LocalDate dataInicio, LocalDate dataFim) {
+        if (dataInicio.isAfter(dataFim)) {
+            throw new HospedagemBadRequestException("A data de início não pode ser posterior à data de término.");
+        }
+
+        if (dataInicio.isEqual(dataFim)) {
+            throw new HospedagemBadRequestException("é necessario fazer reservas de no minimo 1 dia");
+        }
+
         List<Hospedagem> hospedagensConflitantes = hospedagemRepository.findByDataInicioBetweenOrDataFimBetween(
                 dataInicio, dataFim, dataInicio, dataFim);
 
@@ -163,5 +176,6 @@ public class HospedagemServiceImpl implements HospedagemService {
             }
         }
     }
+
 
 }
