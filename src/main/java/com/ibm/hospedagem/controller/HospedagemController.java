@@ -70,9 +70,9 @@ public class HospedagemController {
     @Operation(summary = "Deletar reserva por ID (Muda o status para cancelada)")
     @ApiResponse(responseCode = "200", description = "Sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = HospedagemDTO.class)))
     @DeleteMapping("/{id}/cancelar")
-    ResponseEntity<Void> deleteHospedagemById(@PathVariable Long id) {
-        hospedagemService.deleteById(id);
-       return ResponseEntity.noContent().build();
+    ResponseEntity<HospedagemDTO> deleteHospedagemById(@PathVariable Long id) {
+        HospedagemDTO hospedagemDelete = hospedagemService.deleteById(id);
+       return ResponseEntity.ok(hospedagemDelete);
     }
 
 

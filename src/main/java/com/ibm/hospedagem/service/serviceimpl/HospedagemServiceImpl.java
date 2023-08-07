@@ -91,8 +91,11 @@ public class HospedagemServiceImpl implements HospedagemService {
         }
         if (!hospedagemDTO.getStatus().equals(getHospedagem.getStatus())) {
             Status newStatus = hospedagemDTO.getStatus();
-            if (newStatus == Status.CONFIRMADO || newStatus == Status.PENDENTE) {
+            if (newStatus.equals(Status.CONFIRMADO) || newStatus.equals(Status.PENDENTE)) {
                 getHospedagem.setStatus(newStatus);
+            }
+            if (newStatus.equals(Status.CANCELADO)){
+                throw new HospedagemBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
             }
         }
         if (!hospedagemDTO.getQuantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
@@ -111,6 +114,8 @@ public class HospedagemServiceImpl implements HospedagemService {
         Hospedagem hospedagem = hospedagemRepository.findById(id)
                 .orElseThrow(() -> new HospedagemNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
         hospedagem.setStatus(Status.CANCELADO);
+        hospedagemRepository.save(hospedagem);
+
         return toDTO(hospedagem);
         //hospedagemRepository.deleteById(hospedagem.getId());
     }
