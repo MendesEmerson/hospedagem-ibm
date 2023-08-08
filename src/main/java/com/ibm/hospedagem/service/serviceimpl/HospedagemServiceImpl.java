@@ -179,7 +179,6 @@ public class HospedagemServiceImpl implements HospedagemService {
     }
 
     private void verificarConflitosDeDatas(Long id, LocalDate dataInicio, LocalDate dataFim) {
-
         LocalDate dataAtual = LocalDate.now();
 
         if (dataInicio.isBefore(dataAtual)) {
@@ -191,20 +190,28 @@ public class HospedagemServiceImpl implements HospedagemService {
         }
 
         if (dataInicio.isEqual(dataFim)) {
-            throw new HospedagemBadRequestException("é necessario fazer reservas de no minimo 1 dia");
+            throw new HospedagemBadRequestException("É necessário fazer reservas de no mínimo 1 dia.");
         }
 
-        List<Hospedagem> hospedagensConflitantes = hospedagemRepository.findByDataInicioBetweenOrDataFimBetween(
-                dataInicio, dataFim, dataInicio, dataFim);
+        List<Hospedagem> hospedagensConflitantes = hospedagemRepository.findAll();
 
-        hospedagensConflitantes.removeIf(hospedagemConflitante -> hospedagemConflitante.getId().equals(id));
+        for (Hospedagem hospedagem : hospedagensConflitantes) {
+            if (hospedagem.getStatus() == Status.CANCELADO) {
+                continue; // Ignora reservas canceladas
+            }
 
-        for (Hospedagem hospedagemConflitante : hospedagensConflitantes) {
-            if (hospedagemConflitante.getStatus() != Status.CANCELADO) {
-                throw new HospedagemBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
+            LocalDate reservaInicio = hospedagem.getDataInicio();
+            LocalDate reservaFim = hospedagem.getDataFim();
+
+            if (dataInicio.isBefore(reservaFim) && dataFim.isAfter(reservaInicio)) {
+                // Há sobreposição de datas
+                if (!hospedagem.getId().equals(id)) {
+                    throw new HospedagemBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
+                }
             }
         }
     }
+
 
 
 }
