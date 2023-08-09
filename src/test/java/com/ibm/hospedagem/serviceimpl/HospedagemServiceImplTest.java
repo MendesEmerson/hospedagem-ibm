@@ -16,9 +16,11 @@ import org.mockito.MockitoAnnotations;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 
 class HospedagemServiceImplTest {
 
@@ -34,62 +36,62 @@ class HospedagemServiceImplTest {
     }
 
     @Test
-    void testFindAll() {
+    void encontrarTodasAsHospedagens() {
         Hospedagem hospedagem1 = new Hospedagem();
         Hospedagem hospedagem2 = new Hospedagem();
 
         when(hospedagemRepository.findAll()).thenReturn(Arrays.asList(hospedagem1, hospedagem2));
 
-        List<HospedagemDTO> result = hospedagemService.findAll();
+        List<HospedagemDTO> resultado = hospedagemService.findAll();
 
-        assertEquals(2, result.size());
+        assertEquals(2, resultado.size());
     }
 
     @Test
-    void testFindByStatus_ValidStatus() {
+    void encontrarHospedagensPorStatus_Valido() {
         Hospedagem hospedagem1 = new Hospedagem();
         Hospedagem hospedagem2 = new Hospedagem();
         Status status = Status.CONFIRMADO;
 
         when(hospedagemRepository.findByStatus(status)).thenReturn(Arrays.asList(hospedagem1, hospedagem2));
 
-        List<HospedagemDTO> result = hospedagemService.findByStatus(status);
+        List<HospedagemDTO> resultado = hospedagemService.findByStatus(status);
 
-        assertEquals(2, result.size());
+        assertEquals(2, resultado.size());
     }
 
     @Test
-    void testFindByStatus_InvalidStatus() {
+    void excecaoAoEncontrarHospedagensPorStatus_Invalido() {
         Status status = null;
 
         assertThrows(HospedagemBadRequestException.class, () -> hospedagemService.findByStatus(status));
     }
 
     @Test
-    void testFindById_ValidId() {
+    void encontrarHospedagemPorId_Valido() {
         Long id = 1L;
         Hospedagem hospedagem = new Hospedagem();
         hospedagem.setId(id);
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.of(hospedagem));
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
 
-        HospedagemDTO result = hospedagemService.findById(id);
+        HospedagemDTO resultado = hospedagemService.findById(id);
 
-        assertNotNull(result);
-        assertEquals(id, result.getId());
+        assertNotNull(resultado);
+        assertEquals(id, resultado.getId());
     }
 
     @Test
-    void testFindById_InvalidId() {
+    void excecaoAoEncontrarHospedagemPorId_Invalido() {
         Long id = 1L;
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.empty());
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(HospedagemNotFoundException.class, () -> hospedagemService.findById(id));
     }
 
     @Test
-    void testCreateHospedagem_ValidData() {
+    void criarHospedagem_ComDadosValidos() {
         HospedagemDTO hospedagemDTO = new HospedagemDTO(
                 1L,
                 "Fulano",
@@ -99,27 +101,37 @@ class HospedagemServiceImplTest {
                 Status.CONFIRMADO
         );
 
-        when(hospedagemRepository.save(any())).thenReturn(new Hospedagem());
+        Hospedagem hospedagem = new Hospedagem(
+                hospedagemDTO.getId(),
+                hospedagemDTO.getNomeHospede(),
+                hospedagemDTO.getDataInicio(),
+                hospedagemDTO.getDataFim(),
+                hospedagemDTO.getQuantidadePessoas(),
+                hospedagemDTO.getStatus()
+        );
 
-        HospedagemDTO result = hospedagemService.createHospedagem(hospedagemDTO);
+        when(hospedagemRepository.save(any())).thenReturn(hospedagem);
 
-        assertNotNull(result);
-        assertEquals(hospedagemDTO, result);
-        assertEquals(Status.CONFIRMADO, result.getStatus());
+        HospedagemDTO resultado = hospedagemService.createHospedagem(hospedagemDTO);
+
+        assertNotNull(resultado);
+        assertEquals(hospedagemDTO, resultado);
+        assertEquals(Status.CONFIRMADO, resultado.getStatus());
     }
 
     @Test
-    void testCreateHospedagem_MissingData() {
+    void excecaoAoCriarHospedagem_ComDadosFaltantes() {
         HospedagemDTO hospedagemDTO = new HospedagemDTO();
 
         assertThrows(HospedagemBadRequestException.class, () -> hospedagemService.createHospedagem(hospedagemDTO));
     }
 
     @Test
-    void testUpdateById_ValidData() {
+    void atualizarHospedagem_ComDadosValidos() {
         Long id = 1L;
         Hospedagem hospedagem = new Hospedagem();
         hospedagem.setId(id);
+        hospedagem.setStatus(Status.CONFIRMADO);
 
         HospedagemDTO hospedagemDTO = new HospedagemDTO();
         hospedagemDTO.setNomeHospede("Novo Nome");
@@ -128,43 +140,70 @@ class HospedagemServiceImplTest {
         hospedagemDTO.setStatus(Status.CONFIRMADO);
         hospedagemDTO.setQuantidadePessoas(2);
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.of(hospedagem));
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
         when(hospedagemRepository.save(any())).thenReturn(hospedagem);
 
-        HospedagemDTO result = hospedagemService.updateById(id, hospedagemDTO);
+        HospedagemDTO resultado = hospedagemService.updateById(id, hospedagemDTO);
 
-        assertNotNull(result);
-        assertEquals(hospedagemDTO.getNomeHospede(), result.getNomeHospede());
+        assertNotNull(resultado);
+        assertEquals(hospedagemDTO.getNomeHospede(), resultado.getNomeHospede());
     }
 
     @Test
-    void testUpdateById_InvalidId() {
+    void excecaoAoAtualizarHospedagem_ComIdInvalido() {
         Long id = 1L;
         HospedagemDTO hospedagemDTO = new HospedagemDTO();
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.empty());
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(HospedagemNotFoundException.class, () -> hospedagemService.updateById(id, hospedagemDTO));
     }
 
     @Test
-    void testDeleteById_ValidId() {
+    void excecaoAoAtualizarHospedagem_ComStatusCancelado() {
         Long id = 1L;
         Hospedagem hospedagem = new Hospedagem();
         hospedagem.setId(id);
+        hospedagem.setStatus(Status.CANCELADO);
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.of(hospedagem));
+        HospedagemDTO hospedagemDTO = new HospedagemDTO();
+        hospedagemDTO.setStatus(Status.CONFIRMADO);
+
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
+
+        assertThrows(HospedagemBadRequestException.class, () -> hospedagemService.updateById(id, hospedagemDTO));
+    }
+
+    @Test
+    void excluirHospedagem_ComIdValido() {
+        Long id = 1L;
+        Hospedagem hospedagem = new Hospedagem();
+        hospedagem.setId(id);
+        hospedagem.setStatus(Status.CONFIRMADO);
+
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
 
         assertDoesNotThrow(() -> hospedagemService.deleteById(id));
     }
 
     @Test
-    void testDeleteById_InvalidId() {
+    void excecaoAoExcluirHospedagem_ComIdInvalido() {
         Long id = 1L;
 
-        when(hospedagemRepository.findById(id)).thenReturn(java.util.Optional.empty());
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(HospedagemNotFoundException.class, () -> hospedagemService.deleteById(id));
     }
 
+    @Test
+    void excecaoAoExcluirHospedagem_ComStatusCancelado() {
+        Long id = 1L;
+        Hospedagem hospedagem = new Hospedagem();
+        hospedagem.setId(id);
+        hospedagem.setStatus(Status.CANCELADO);
+
+        when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
+
+        assertThrows(HospedagemBadRequestException.class, () -> hospedagemService.deleteById(id));
+    }
 }
