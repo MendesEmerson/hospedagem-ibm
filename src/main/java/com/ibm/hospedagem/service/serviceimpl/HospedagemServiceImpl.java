@@ -34,7 +34,7 @@ public class HospedagemServiceImpl implements HospedagemService {
             throw new HospedagemBadRequestException("O valor não pode ser nulo");
         }
 
-        if(status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
+        if (status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
             return hospedagemRepository.findByStatus(status).stream().map(this::toDTO).toList();
         } else {
             throw new HospedagemBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
@@ -116,7 +116,7 @@ public class HospedagemServiceImpl implements HospedagemService {
             if (newStatus.equals(Status.CONFIRMADO) || newStatus.equals(Status.PENDENTE)) {
                 getHospedagem.setStatus(newStatus);
             }
-            if (newStatus.equals(Status.CANCELADO)){
+            if (newStatus.equals(Status.CANCELADO)) {
                 throw new HospedagemBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
             }
         }
@@ -128,7 +128,6 @@ public class HospedagemServiceImpl implements HospedagemService {
 
         return toDTO(getHospedagem);
     }
-
 
 
     @Override
@@ -154,6 +153,7 @@ public class HospedagemServiceImpl implements HospedagemService {
                 hospedagem.getDataInicio(),
                 hospedagem.getDataFim(),
                 hospedagem.getQuantidadePessoas(),
+                hospedagem.getUsuario(),
                 hospedagem.getStatus()
         );
     }
@@ -165,6 +165,7 @@ public class HospedagemServiceImpl implements HospedagemService {
                 hospedagemDTO.getDataInicio(),
                 hospedagemDTO.getDataFim(),
                 hospedagemDTO.getQuantidadePessoas(),
+                hospedagemDTO.getUsuario(),
                 hospedagemDTO.getStatus()
         );
     }
@@ -197,21 +198,19 @@ public class HospedagemServiceImpl implements HospedagemService {
 
         for (Hospedagem hospedagem : hospedagensConflitantes) {
             if (hospedagem.getStatus() == Status.CANCELADO) {
-                continue; // Ignora reservas canceladas
+                continue;
             }
 
             LocalDate reservaInicio = hospedagem.getDataInicio();
             LocalDate reservaFim = hospedagem.getDataFim();
 
             if (dataInicio.isBefore(reservaFim) && dataFim.isAfter(reservaInicio)) {
-                // Há sobreposição de datas
                 if (!hospedagem.getId().equals(id)) {
                     throw new HospedagemBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
                 }
             }
         }
     }
-
 
 
 }

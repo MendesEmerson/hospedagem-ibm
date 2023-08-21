@@ -7,8 +7,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 
-
-
 @Getter
 public class HospedagemBadRequestException extends RuntimeException {
     private final ProblemDetail problemDetail;

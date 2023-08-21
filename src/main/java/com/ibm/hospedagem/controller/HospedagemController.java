@@ -3,7 +3,6 @@ package com.ibm.hospedagem.controller;
 import com.ibm.hospedagem.dto.HospedagemDTO;
 import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.service.HospedagemService;
-import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
