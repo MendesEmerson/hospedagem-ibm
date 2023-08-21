@@ -1,5 +1,6 @@
 package com.ibm.hospedagem.dto;
 
+import com.ibm.hospedagem.model.Usuario;
 import com.ibm.hospedagem.model.enums.Status;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -28,8 +29,10 @@ public class HospedagemDTO {
     private Integer quantidadePessoas;
 
     @NotBlank
-    private Status status;
+    private Usuario usuario;
 
+    @NotBlank
+    private Status status;
 
 
 }
