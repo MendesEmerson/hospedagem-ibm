@@ -1,4 +1,4 @@
-package com.ibm.hospedagem.service.exception.hospedagemException;
+package com.ibm.hospedagem.service.exception.reservaException;
 
 import com.ibm.hospedagem.service.exception.ProblemDetail;
 import lombok.Getter;
@@ -8,10 +8,10 @@ import java.time.format.DateTimeFormatter;
 
 
 @Getter
-public class HospedagemNotFoundException extends RuntimeException {
+public class ReservaNotFoundException extends RuntimeException {
     private final ProblemDetail problemDetail;
 
-    public HospedagemNotFoundException(String message) {
+    public ReservaNotFoundException(String message) {
         super(message);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");

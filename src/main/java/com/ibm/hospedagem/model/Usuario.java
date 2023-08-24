@@ -33,6 +33,6 @@ public class Usuario implements Serializable {
     private String password;
 
     @OneToMany(mappedBy = "usuario", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Hospedagem> hospedagens = new ArrayList<Hospedagem>();
+    private List<Reserva> hospedagens = new ArrayList<Reserva>();
 
 }

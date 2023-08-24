@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
-public record HospedagemDTO(
+public record ReservaDTO(
         Long id,
         @NotBlank String nomeHospede,
         @NotBlank LocalDate dataInicio,

@@ -1,12 +1,12 @@
 package com.ibm.hospedagem.service.serviceimpl;
 
-import com.ibm.hospedagem.dto.HospedagemDTO;
-import com.ibm.hospedagem.model.Hospedagem;
+import com.ibm.hospedagem.dto.ReservaDTO;
+import com.ibm.hospedagem.model.Reserva;
 import com.ibm.hospedagem.model.enums.Status;
-import com.ibm.hospedagem.repository.HospedagemRepository;
-import com.ibm.hospedagem.service.HospedagemService;
-import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
-import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemNotFoundException;
+import com.ibm.hospedagem.repository.ReservaRepository;
+import com.ibm.hospedagem.service.ReservaService;
+import com.ibm.hospedagem.service.exception.reservaException.ReservaBadRequestException;
+import com.ibm.hospedagem.service.exception.reservaException.ReservaNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,36 +18,36 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-public class HospedagemServiceImpl implements HospedagemService {
+public class ReservaServiceImpl implements ReservaService {
 
     @Autowired
-    private final HospedagemRepository hospedagemRepository;
+    private final ReservaRepository reservaRepository;
 
     @Override
-    public List<HospedagemDTO> findAll() {
-        return hospedagemRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+    public List<ReservaDTO> findAll() {
+        return reservaRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
-    public List<HospedagemDTO> findByStatus(Status status) {
+    public List<ReservaDTO> findByStatus(Status status) {
         if (status == null) {
-            throw new HospedagemBadRequestException("O valor não pode ser nulo");
+            throw new ReservaBadRequestException("O valor não pode ser nulo");
         }
 
         if (status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
-            return hospedagemRepository.findByStatus(status).stream().map(this::toDTO).toList();
+            return reservaRepository.findByStatus(status).stream().map(this::toDTO).toList();
         } else {
-            throw new HospedagemBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
+            throw new ReservaBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
         }
     }
 
     @Override
     public List<LocalDate> findDiasIndisponiveis() {
-        List<Hospedagem> hospedagens = hospedagemRepository.findAll();
+        List<Reserva> hospedagens = reservaRepository.findAll();
 
         List<LocalDate> diasIndisponiveis = new ArrayList<>();
 
-        for (Hospedagem hospedagem : hospedagens) {
+        for (Reserva hospedagem : hospedagens) {
             if (hospedagem.getStatus() != Status.CANCELADO) {
                 LocalDate dataInicio = hospedagem.getDataInicio();
                 LocalDate dataFim = hospedagem.getDataFim();
@@ -63,33 +63,33 @@ public class HospedagemServiceImpl implements HospedagemService {
     }
 
     @Override
-    public HospedagemDTO findById(Long id) {
-        Hospedagem hospedagem = hospedagemRepository.findById(id)
-                .orElseThrow(() -> new HospedagemNotFoundException("Reserva com id " + id + " não encontrada"));
+    public ReservaDTO findById(Long id) {
+        Reserva hospedagem = reservaRepository.findById(id)
+                .orElseThrow(() -> new ReservaNotFoundException("Reserva com id " + id + " não encontrada"));
         return toDTO(hospedagem);
     }
 
     @Override
-    public HospedagemDTO createHospedagem(HospedagemDTO hospedagemDTO) {
+    public ReservaDTO createHospedagem(ReservaDTO hospedagemDTO) {
 
         validarCamposObrigatorios(hospedagemDTO);
 
         verificarConflitosDeDatas(null, hospedagemDTO.dataInicio(), hospedagemDTO.dataFim());
 
-        Hospedagem newHospedagem = toEntity(hospedagemDTO);
+        Reserva newHospedagem = toEntity(hospedagemDTO);
         newHospedagem.setStatus(Status.CONFIRMADO);
 
-        Hospedagem savedHospedagem = hospedagemRepository.save(newHospedagem);
+        Reserva savedHospedagem = reservaRepository.save(newHospedagem);
         return toDTO(savedHospedagem);
     }
 
     @Override
-    public HospedagemDTO updateById(Long id, HospedagemDTO hospedagemDTO) {
-        Hospedagem getHospedagem = hospedagemRepository.findById(id)
-                .orElseThrow(() -> new HospedagemNotFoundException("Reserva com id " + id + " não encontrada"));
+    public ReservaDTO updateById(Long id, ReservaDTO hospedagemDTO) {
+        Reserva getHospedagem = reservaRepository.findById(id)
+                .orElseThrow(() -> new ReservaNotFoundException("Reserva com id " + id + " não encontrada"));
 
         if (getHospedagem.getStatus().equals(Status.CANCELADO)) {
-            throw new HospedagemBadRequestException("Reserva cancelada, não é possivel fazer alterações em reservas que foram canceladas no sistema");
+            throw new ReservaBadRequestException("Reserva cancelada, não é possivel fazer alterações em reservas que foram canceladas no sistema");
         }
 
         validarCamposObrigatorios(hospedagemDTO);
@@ -117,37 +117,37 @@ public class HospedagemServiceImpl implements HospedagemService {
                 getHospedagem.setStatus(newStatus);
             }
             if (newStatus.equals(Status.CANCELADO)) {
-                throw new HospedagemBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
+                throw new ReservaBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
             }
         }
         if (!hospedagemDTO.quantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
             getHospedagem.setQuantidadePessoas(hospedagemDTO.quantidadePessoas());
         }
 
-        hospedagemRepository.save(getHospedagem);
+        reservaRepository.save(getHospedagem);
 
         return toDTO(getHospedagem);
     }
 
 
     @Override
-    public HospedagemDTO deleteById(Long id) {
-        Hospedagem hospedagem = hospedagemRepository.findById(id)
-                .orElseThrow(() -> new HospedagemNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
+    public ReservaDTO deleteById(Long id) {
+        Reserva hospedagem = reservaRepository.findById(id)
+                .orElseThrow(() -> new ReservaNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
 
         if (hospedagem.getStatus().equals(Status.CANCELADO)) {
-            throw new HospedagemBadRequestException("Essa reserva já esta cancelada no sistema");
+            throw new ReservaBadRequestException("Essa reserva já esta cancelada no sistema");
         }
 
         hospedagem.setStatus(Status.CANCELADO);
-        hospedagemRepository.save(hospedagem);
+        reservaRepository.save(hospedagem);
 
         return toDTO(hospedagem);
         //hospedagemRepository.deleteById(hospedagem.getId());
     }
 
-    private HospedagemDTO toDTO(Hospedagem hospedagem) {
-        return new HospedagemDTO(
+    private ReservaDTO toDTO(Reserva hospedagem) {
+        return new ReservaDTO(
                 hospedagem.getId(),
                 hospedagem.getNomeHospede(),
                 hospedagem.getDataInicio(),
@@ -158,8 +158,8 @@ public class HospedagemServiceImpl implements HospedagemService {
         );
     }
 
-    private Hospedagem toEntity(HospedagemDTO hospedagemDTO) {
-        return new Hospedagem(
+    private Reserva toEntity(ReservaDTO hospedagemDTO) {
+        return new Reserva(
                 hospedagemDTO.id(),
                 hospedagemDTO.nomeHospede(),
                 hospedagemDTO.dataInicio(),
@@ -170,12 +170,12 @@ public class HospedagemServiceImpl implements HospedagemService {
         );
     }
 
-    private void validarCamposObrigatorios(HospedagemDTO hospedagemDTO) {
+    private void validarCamposObrigatorios(ReservaDTO hospedagemDTO) {
         if (hospedagemDTO.nomeHospede() == null || hospedagemDTO.nomeHospede().isBlank()
                 || hospedagemDTO.dataInicio() == null
                 || hospedagemDTO.dataFim() == null
                 || hospedagemDTO.quantidadePessoas() == null || hospedagemDTO.quantidadePessoas() <= 0) {
-            throw new HospedagemBadRequestException("Campos obrigatórios não preenchidos corretamente");
+            throw new ReservaBadRequestException("Campos obrigatórios não preenchidos corretamente");
         }
     }
 
@@ -183,20 +183,20 @@ public class HospedagemServiceImpl implements HospedagemService {
         LocalDate dataAtual = LocalDate.now();
 
         if (dataInicio.isBefore(dataAtual)) {
-            throw new HospedagemBadRequestException("A data de início não pode ser anterior à data atual.");
+            throw new ReservaBadRequestException("A data de início não pode ser anterior à data atual.");
         }
 
         if (dataInicio.isAfter(dataFim)) {
-            throw new HospedagemBadRequestException("A data de início não pode ser posterior à data de término.");
+            throw new ReservaBadRequestException("A data de início não pode ser posterior à data de término.");
         }
 
         if (dataInicio.isEqual(dataFim)) {
-            throw new HospedagemBadRequestException("É necessário fazer reservas de no mínimo 1 dia.");
+            throw new ReservaBadRequestException("É necessário fazer reservas de no mínimo 1 dia.");
         }
 
-        List<Hospedagem> hospedagensConflitantes = hospedagemRepository.findAll();
+        List<Reserva> hospedagensConflitantes = reservaRepository.findAll();
 
-        for (Hospedagem hospedagem : hospedagensConflitantes) {
+        for (Reserva hospedagem : hospedagensConflitantes) {
             if (hospedagem.getStatus() == Status.CANCELADO) {
                 continue;
             }
@@ -206,7 +206,7 @@ public class HospedagemServiceImpl implements HospedagemService {
 
             if (dataInicio.isBefore(reservaFim) && dataFim.isAfter(reservaInicio)) {
                 if (!hospedagem.getId().equals(id)) {
-                    throw new HospedagemBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
+                    throw new ReservaBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
                 }
             }
         }
