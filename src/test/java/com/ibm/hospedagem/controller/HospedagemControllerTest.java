@@ -1,6 +1,8 @@
 package com.ibm.hospedagem.controller;
 
 import com.ibm.hospedagem.dto.HospedagemDTO;
+import com.ibm.hospedagem.model.Usuario;
+import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.service.HospedagemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDate;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -34,10 +37,25 @@ class HospedagemControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(hospedagemController).build();
     }
 
+    Usuario usuario = new Usuario(
+            1L,
+            "Emerson",
+            "123456"
+
+    );
+
+    HospedagemDTO hospedagemDTO = new HospedagemDTO(
+            1L,
+            "Novo Nome",
+            LocalDate.now().plusDays(1),
+            LocalDate.now().plusDays(3),
+            2,
+            usuario,
+            Status.CONFIRMADO
+    );
+
     @Test
     void testCreateHospedagem() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.createHospedagem(any())).thenReturn(hospedagemDTO);
 
@@ -51,8 +69,6 @@ class HospedagemControllerTest {
 
     @Test
     void testFindAllHospedagens() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.findAll()).thenReturn(Collections.singletonList(hospedagemDTO));
 
@@ -64,8 +80,6 @@ class HospedagemControllerTest {
 
     @Test
     void testFindHospedagensByStatus() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.findByStatus(any())).thenReturn(Collections.singletonList(hospedagemDTO));
 
@@ -77,8 +91,6 @@ class HospedagemControllerTest {
 
     @Test
     void testFindHospedagemById() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.findById(any())).thenReturn(hospedagemDTO);
 
@@ -90,8 +102,6 @@ class HospedagemControllerTest {
 
     @Test
     void testUpdateHospedagemById() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.updateById(any(), any())).thenReturn(hospedagemDTO);
 
@@ -105,8 +115,6 @@ class HospedagemControllerTest {
 
     @Test
     void testDeleteHospedagemById() throws Exception {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setId(1L);
 
         when(hospedagemService.deleteById(any())).thenReturn(hospedagemDTO);
 

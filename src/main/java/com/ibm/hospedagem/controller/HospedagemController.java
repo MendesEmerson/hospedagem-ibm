@@ -3,7 +3,6 @@ package com.ibm.hospedagem.controller;
 import com.ibm.hospedagem.dto.HospedagemDTO;
 import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.service.HospedagemService;
-import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,7 +33,7 @@ public class HospedagemController {
     ResponseEntity<HospedagemDTO> createHospedagem(@RequestBody HospedagemDTO hospedagemDTO) {
         HospedagemDTO newHospedagem = hospedagemService.createHospedagem(hospedagemDTO);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(newHospedagem.getId()).toUri();
+                .buildAndExpand(newHospedagem.id()).toUri();
         return ResponseEntity.created(uri).body(newHospedagem);
     }
 
