@@ -15,6 +15,13 @@ import java.util.List;
 @Data
 public class Usuario implements Serializable {
 
+    public Usuario(Long id, String username, String password) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.hospedagens = new ArrayList<>();
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

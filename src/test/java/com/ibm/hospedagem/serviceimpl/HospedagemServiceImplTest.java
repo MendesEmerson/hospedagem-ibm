@@ -2,6 +2,7 @@ package com.ibm.hospedagem.serviceimpl;
 
 import com.ibm.hospedagem.dto.HospedagemDTO;
 import com.ibm.hospedagem.model.Hospedagem;
+import com.ibm.hospedagem.model.Usuario;
 import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.repository.HospedagemRepository;
 import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +36,13 @@ class HospedagemServiceImplTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
+
+    Usuario usuario = new Usuario(
+            1L,
+            "Emerson",
+            "123456"
+
+    );
 
     @Test
     void encontrarTodasAsHospedagens() {
@@ -78,7 +87,7 @@ class HospedagemServiceImplTest {
         HospedagemDTO resultado = hospedagemService.findById(id);
 
         assertNotNull(resultado);
-        assertEquals(id, resultado.getId());
+        assertEquals(id, resultado.id());
     }
 
     @Test
@@ -92,22 +101,25 @@ class HospedagemServiceImplTest {
 
     @Test
     void criarHospedagem_ComDadosValidos() {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO(
+
+        var hospedagemDTO = new HospedagemDTO(
                 1L,
                 "Fulano",
                 LocalDate.now().plusDays(1),
                 LocalDate.now().plusDays(3),
                 2,
+                usuario,
                 Status.CONFIRMADO
         );
 
         Hospedagem hospedagem = new Hospedagem(
-                hospedagemDTO.getId(),
-                hospedagemDTO.getNomeHospede(),
-                hospedagemDTO.getDataInicio(),
-                hospedagemDTO.getDataFim(),
-                hospedagemDTO.getQuantidadePessoas(),
-                hospedagemDTO.getStatus()
+                hospedagemDTO.id(),
+                hospedagemDTO.nomeHospede(),
+                hospedagemDTO.dataInicio(),
+                hospedagemDTO.dataFim(),
+                hospedagemDTO.quantidadePessoas(),
+                hospedagemDTO.usuario(),
+                hospedagemDTO.status()
         );
 
         when(hospedagemRepository.save(any())).thenReturn(hospedagem);
@@ -116,12 +128,14 @@ class HospedagemServiceImplTest {
 
         assertNotNull(resultado);
         assertEquals(hospedagemDTO, resultado);
-        assertEquals(Status.CONFIRMADO, resultado.getStatus());
+        assertEquals(Status.CONFIRMADO, resultado.status());
     }
 
     @Test
     void excecaoAoCriarHospedagem_ComDadosFaltantes() {
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
+        HospedagemDTO hospedagemDTO = new HospedagemDTO(
+                null, null, null, null, null, null, null
+        );
 
         assertThrows(HospedagemBadRequestException.class, () -> hospedagemService.createHospedagem(hospedagemDTO));
     }
@@ -133,12 +147,15 @@ class HospedagemServiceImplTest {
         hospedagem.setId(id);
         hospedagem.setStatus(Status.CONFIRMADO);
 
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setNomeHospede("Novo Nome");
-        hospedagemDTO.setDataInicio(LocalDate.now().plusDays(1));
-        hospedagemDTO.setDataFim(LocalDate.now().plusDays(3));
-        hospedagemDTO.setStatus(Status.CONFIRMADO);
-        hospedagemDTO.setQuantidadePessoas(2);
+        HospedagemDTO hospedagemDTO = new HospedagemDTO(
+                1L,
+                "Novo Nome",
+                LocalDate.now().plusDays(1),
+                LocalDate.now().plusDays(3),
+                2,
+                usuario,
+                Status.CONFIRMADO
+        );
 
         when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
         when(hospedagemRepository.save(any())).thenReturn(hospedagem);
@@ -146,13 +163,21 @@ class HospedagemServiceImplTest {
         HospedagemDTO resultado = hospedagemService.updateById(id, hospedagemDTO);
 
         assertNotNull(resultado);
-        assertEquals(hospedagemDTO.getNomeHospede(), resultado.getNomeHospede());
+        assertEquals(hospedagemDTO.nomeHospede(), resultado.nomeHospede());
     }
 
     @Test
     void excecaoAoAtualizarHospedagem_ComIdInvalido() {
         Long id = 1L;
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
+        HospedagemDTO hospedagemDTO = new HospedagemDTO(
+                null,
+                "Novo Nome",
+                LocalDate.now().plusDays(1),
+                LocalDate.now().plusDays(3),
+                2,
+                usuario,
+                Status.CONFIRMADO
+        );
 
         when(hospedagemRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -166,8 +191,15 @@ class HospedagemServiceImplTest {
         hospedagem.setId(id);
         hospedagem.setStatus(Status.CANCELADO);
 
-        HospedagemDTO hospedagemDTO = new HospedagemDTO();
-        hospedagemDTO.setStatus(Status.CONFIRMADO);
+        HospedagemDTO hospedagemDTO = new HospedagemDTO(
+                1L,
+                "Novo Nome",
+                LocalDate.now().plusDays(1),
+                LocalDate.now().plusDays(3),
+                2,
+                usuario,
+                Status.CANCELADO
+        );
 
         when(hospedagemRepository.findById(id)).thenReturn(Optional.of(hospedagem));
 

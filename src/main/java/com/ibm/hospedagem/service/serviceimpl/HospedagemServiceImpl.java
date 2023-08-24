@@ -74,7 +74,7 @@ public class HospedagemServiceImpl implements HospedagemService {
 
         validarCamposObrigatorios(hospedagemDTO);
 
-        verificarConflitosDeDatas(null, hospedagemDTO.getDataInicio(), hospedagemDTO.getDataFim());
+        verificarConflitosDeDatas(null, hospedagemDTO.dataInicio(), hospedagemDTO.dataFim());
 
         Hospedagem newHospedagem = toEntity(hospedagemDTO);
         newHospedagem.setStatus(Status.CONFIRMADO);
@@ -94,25 +94,25 @@ public class HospedagemServiceImpl implements HospedagemService {
 
         validarCamposObrigatorios(hospedagemDTO);
 
-        LocalDate dataInicioNovaHospedagem = hospedagemDTO.getDataInicio();
-        LocalDate dataFimNovaHospedagem = hospedagemDTO.getDataFim();
+        LocalDate dataInicioNovaHospedagem = hospedagemDTO.dataInicio();
+        LocalDate dataFimNovaHospedagem = hospedagemDTO.dataFim();
 
         if (!dataInicioNovaHospedagem.equals(getHospedagem.getDataInicio())
                 || !dataFimNovaHospedagem.equals(getHospedagem.getDataFim())) {
             verificarConflitosDeDatas(id, dataInicioNovaHospedagem, dataFimNovaHospedagem);
         }
 
-        if (!hospedagemDTO.getNomeHospede().equals(getHospedagem.getNomeHospede())) {
-            getHospedagem.setNomeHospede(hospedagemDTO.getNomeHospede());
+        if (!hospedagemDTO.nomeHospede().equals(getHospedagem.getNomeHospede())) {
+            getHospedagem.setNomeHospede(hospedagemDTO.nomeHospede());
         }
-        if (!hospedagemDTO.getDataInicio().equals(getHospedagem.getDataInicio())) {
-            getHospedagem.setDataInicio(hospedagemDTO.getDataInicio());
+        if (!hospedagemDTO.dataInicio().equals(getHospedagem.getDataInicio())) {
+            getHospedagem.setDataInicio(hospedagemDTO.dataInicio());
         }
-        if (!hospedagemDTO.getDataFim().equals(getHospedagem.getDataFim())) {
-            getHospedagem.setDataFim(hospedagemDTO.getDataFim());
+        if (!hospedagemDTO.dataFim().equals(getHospedagem.getDataFim())) {
+            getHospedagem.setDataFim(hospedagemDTO.dataFim());
         }
-        if (!hospedagemDTO.getStatus().equals(getHospedagem.getStatus())) {
-            Status newStatus = hospedagemDTO.getStatus();
+        if (!hospedagemDTO.status().equals(getHospedagem.getStatus())) {
+            Status newStatus = hospedagemDTO.status();
             if (newStatus.equals(Status.CONFIRMADO) || newStatus.equals(Status.PENDENTE)) {
                 getHospedagem.setStatus(newStatus);
             }
@@ -120,8 +120,8 @@ public class HospedagemServiceImpl implements HospedagemService {
                 throw new HospedagemBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
             }
         }
-        if (!hospedagemDTO.getQuantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
-            getHospedagem.setQuantidadePessoas(hospedagemDTO.getQuantidadePessoas());
+        if (!hospedagemDTO.quantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
+            getHospedagem.setQuantidadePessoas(hospedagemDTO.quantidadePessoas());
         }
 
         hospedagemRepository.save(getHospedagem);
@@ -160,21 +160,21 @@ public class HospedagemServiceImpl implements HospedagemService {
 
     private Hospedagem toEntity(HospedagemDTO hospedagemDTO) {
         return new Hospedagem(
-                hospedagemDTO.getId(),
-                hospedagemDTO.getNomeHospede(),
-                hospedagemDTO.getDataInicio(),
-                hospedagemDTO.getDataFim(),
-                hospedagemDTO.getQuantidadePessoas(),
-                hospedagemDTO.getUsuario(),
-                hospedagemDTO.getStatus()
+                hospedagemDTO.id(),
+                hospedagemDTO.nomeHospede(),
+                hospedagemDTO.dataInicio(),
+                hospedagemDTO.dataFim(),
+                hospedagemDTO.quantidadePessoas(),
+                hospedagemDTO.usuario(),
+                hospedagemDTO.status()
         );
     }
 
     private void validarCamposObrigatorios(HospedagemDTO hospedagemDTO) {
-        if (hospedagemDTO.getNomeHospede() == null || hospedagemDTO.getNomeHospede().isBlank()
-                || hospedagemDTO.getDataInicio() == null
-                || hospedagemDTO.getDataFim() == null
-                || hospedagemDTO.getQuantidadePessoas() == null || hospedagemDTO.getQuantidadePessoas() <= 0) {
+        if (hospedagemDTO.nomeHospede() == null || hospedagemDTO.nomeHospede().isBlank()
+                || hospedagemDTO.dataInicio() == null
+                || hospedagemDTO.dataFim() == null
+                || hospedagemDTO.quantidadePessoas() == null || hospedagemDTO.quantidadePessoas() <= 0) {
             throw new HospedagemBadRequestException("Campos obrigatórios não preenchidos corretamente");
         }
     }
