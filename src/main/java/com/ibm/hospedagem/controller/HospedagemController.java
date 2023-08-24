@@ -33,7 +33,7 @@ public class HospedagemController {
     ResponseEntity<HospedagemDTO> createHospedagem(@RequestBody HospedagemDTO hospedagemDTO) {
         HospedagemDTO newHospedagem = hospedagemService.createHospedagem(hospedagemDTO);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(newHospedagem.getId()).toUri();
+                .buildAndExpand(newHospedagem.id()).toUri();
         return ResponseEntity.created(uri).body(newHospedagem);
     }
 

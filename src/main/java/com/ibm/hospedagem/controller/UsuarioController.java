@@ -28,7 +28,7 @@ public class UsuarioController {
     ResponseEntity<UsuarioDTO> createUsuario(@RequestBody UsuarioDTO usuarioDTO) {
         UsuarioDTO newUsuario = usuarioService.createUsuario(usuarioDTO);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(newUsuario.getId()).toUri();
+                .buildAndExpand(newUsuario.id()).toUri();
         return ResponseEntity.created(uri).build();
     }
 }

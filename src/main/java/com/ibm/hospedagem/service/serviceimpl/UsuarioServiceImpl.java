@@ -45,26 +45,26 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private Usuario toEntity(UsuarioDTO usuarioDTO) {
         return new Usuario(
-                usuarioDTO.getId(),
-                usuarioDTO.getUsername(),
-                usuarioDTO.getPassword(),
-                usuarioDTO.getHospedagens()
+                usuarioDTO.id(),
+                usuarioDTO.username(),
+                usuarioDTO.password(),
+                usuarioDTO.hospedagens()
         );
     }
 
     private void verificarCamposObrigatorios(UsuarioDTO usuarioDTO) {
-        Usuario findByUsername = usuarioRepository.findByUsername(usuarioDTO.getUsername());
+        Usuario findByUsername = usuarioRepository.findByUsername(usuarioDTO.username());
 
-        boolean invalidUsername = usuarioDTO.getUsername() == null || usuarioDTO.getUsername().isBlank();
-        boolean invalidPassword = usuarioDTO.getPassword() == null || usuarioDTO.getPassword().isBlank();
+        boolean invalidUsername = usuarioDTO.username() == null || usuarioDTO.username().isBlank();
+        boolean invalidPassword = usuarioDTO.password() == null || usuarioDTO.password().isBlank();
 
         if (findByUsername != null) {
-            throw new UsuarioAlreadyExistException("Nome de usuario (" + usuarioDTO.getUsername() + ") indisponivel");
+            throw new UsuarioAlreadyExistException("Nome de usuario (" + usuarioDTO.username() + ") indisponivel");
         } else if (invalidUsername) {
             throw new UsuarioBadRequestException("O campo (username) deve ser preenchido");
         } else if (invalidPassword) {
             throw new UsuarioBadRequestException("o campo (password) deve ser preenchido");
-        } else if (usuarioDTO.getPassword().length() < 6 || usuarioDTO.getPassword().length() > 16) {
+        } else if (usuarioDTO.password().length() < 6 || usuarioDTO.password().length() > 16) {
             throw new UsuarioBadRequestException(" o campo (password) deve conter entre 6 e 15 caracteres");
         }
     }
