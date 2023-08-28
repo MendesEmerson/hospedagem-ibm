@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+
 @Service
 @AllArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
@@ -21,14 +23,16 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioDTO createUsuario(UsuarioDTO usuarioDTO) {
 
         verificarCamposObrigatorios(usuarioDTO);
+        Usuario usuario = toEntity(usuarioDTO);
+        usuario.setReservas(new ArrayList<>());
 
-        Usuario newUsuario = usuarioRepository.save(toEntity(usuarioDTO));
+        Usuario newUsuario = usuarioRepository.save(usuario);
 
         return toDTO(newUsuario);
     }
 
     @Override
-    public UsuarioDTO findById(Long id) {
+    public UsuarioDTO findUsuarioById(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new UsuarioBadRequestException("Usuario com o ID " + id + " Não encontrado"));
         return toDTO(usuario);
@@ -37,35 +41,35 @@ public class UsuarioServiceImpl implements UsuarioService {
     private UsuarioDTO toDTO(Usuario usuario) {
         return new UsuarioDTO(
                 usuario.getId(),
-                usuario.getUsername(),
-                usuario.getPassword(),
-                usuario.getHospedagens()
+                usuario.getUsuario(),
+                usuario.getSenha(),
+                usuario.getReservas()
         );
     }
 
     private Usuario toEntity(UsuarioDTO usuarioDTO) {
         return new Usuario(
                 usuarioDTO.id(),
-                usuarioDTO.username(),
-                usuarioDTO.password(),
-                usuarioDTO.hospedagens()
+                usuarioDTO.usuario(),
+                usuarioDTO.senha(),
+                usuarioDTO.reservas()
         );
     }
 
     private void verificarCamposObrigatorios(UsuarioDTO usuarioDTO) {
-        Usuario findByUsername = usuarioRepository.findByUsername(usuarioDTO.username());
+        Usuario findByUsername = usuarioRepository.findByUsuario(usuarioDTO.usuario());
 
-        boolean invalidUsername = usuarioDTO.username() == null || usuarioDTO.username().isBlank();
-        boolean invalidPassword = usuarioDTO.password() == null || usuarioDTO.password().isBlank();
+        boolean invalidUsername = usuarioDTO.usuario() == null || usuarioDTO.usuario().isBlank();
+        boolean invalidPassword = usuarioDTO.senha() == null || usuarioDTO.senha().isBlank();
 
         if (findByUsername != null) {
-            throw new UsuarioAlreadyExistException("Nome de usuario (" + usuarioDTO.username() + ") indisponivel");
+            throw new UsuarioAlreadyExistException("Nome de usuario (" + usuarioDTO.usuario() + ") indisponivel");
         } else if (invalidUsername) {
-            throw new UsuarioBadRequestException("O campo (username) deve ser preenchido");
+            throw new UsuarioBadRequestException("O campo (usuario) deve ser preenchido");
         } else if (invalidPassword) {
-            throw new UsuarioBadRequestException("o campo (password) deve ser preenchido");
-        } else if (usuarioDTO.password().length() < 6 || usuarioDTO.password().length() > 16) {
-            throw new UsuarioBadRequestException(" o campo (password) deve conter entre 6 e 15 caracteres");
+            throw new UsuarioBadRequestException("o campo (senha) deve ser preenchido");
+        } else if (usuarioDTO.senha().length() < 6 || usuarioDTO.senha().length() > 16) {
+            throw new UsuarioBadRequestException(" o campo (senha) deve conter entre 6 e 15 caracteres");
         }
     }
 }

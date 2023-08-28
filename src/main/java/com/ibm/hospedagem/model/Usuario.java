@@ -1,5 +1,6 @@
 package com.ibm.hospedagem.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,13 +14,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@JsonIgnoreProperties({"reservas", "senha"})
 public class Usuario implements Serializable {
 
-    public Usuario(Long id, String username, String password) {
+    public Usuario(Long id, String usuario, String senha) {
         this.id = id;
-        this.username = username;
-        this.password = password;
-        this.hospedagens = new ArrayList<>();
+        this.usuario = usuario;
+        this.senha = senha;
+        this.reservas = new ArrayList<>();
     }
 
     @Id
@@ -27,12 +29,12 @@ public class Usuario implements Serializable {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String usuario;
 
     @Column(nullable = false, length = 15)
-    private String password;
+    private String senha;
 
-    @OneToMany(mappedBy = "usuario", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Reserva> hospedagens = new ArrayList<Reserva>();
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reserva> reservas;
 
 }
