@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ReservaExceptionHandle {
 
     @ExceptionHandler(ReservaBadRequestException.class)
-    public ResponseEntity<ProblemDetail> handleHospedagemBadRequest(ReservaBadRequestException badRequestException){
+    public ResponseEntity<ProblemDetail> handleReservaBadRequest(ReservaBadRequestException badRequestException){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(badRequestException.getProblemDetail());
     }
 

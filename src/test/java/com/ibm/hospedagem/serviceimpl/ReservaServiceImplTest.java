@@ -107,8 +107,9 @@ class ReservaServiceImplTest {
                 LocalDate.now().plusDays(1),
                 LocalDate.now().plusDays(3),
                 2,
-                usuario,
-                Status.CONFIRMADO
+                Status.CONFIRMADO,
+
+                usuario
         );
 
         Reserva hospedagem = new Reserva(
@@ -117,13 +118,15 @@ class ReservaServiceImplTest {
                 hospedagemDTO.dataInicio(),
                 hospedagemDTO.dataFim(),
                 hospedagemDTO.quantidadePessoas(),
-                hospedagemDTO.usuario(),
-                hospedagemDTO.status()
-        );
+                hospedagemDTO.status(),
+                hospedagemDTO.hospedagem(),
+                hospedagemDTO.usuario()
+
+                );
 
         when(reservaRepository.save(any())).thenReturn(hospedagem);
 
-        ReservaDTO resultado = hospedagemService.createHospedagem(hospedagemDTO);
+        ReservaDTO resultado = hospedagemService.createReserva(hospedagemDTO);
 
         assertNotNull(resultado);
         assertEquals(hospedagemDTO, resultado);
@@ -133,10 +136,10 @@ class ReservaServiceImplTest {
     @Test
     void excecaoAoCriarHospedagem_ComDadosFaltantes() {
         ReservaDTO hospedagemDTO = new ReservaDTO(
-                null, null, null, null, null, null, null
+                null, null,null, null, null, null, null, null
         );
 
-        assertThrows(ReservaBadRequestException.class, () -> hospedagemService.createHospedagem(hospedagemDTO));
+        assertThrows(ReservaBadRequestException.class, () -> hospedagemService.createReserva(hospedagemDTO));
     }
 
     @Test
