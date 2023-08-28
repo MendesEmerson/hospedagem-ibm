@@ -1,8 +1,7 @@
 package com.ibm.hospedagem.model.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.ibm.hospedagem.service.exception.hospedagemException.HospedagemBadRequestException;
+import com.ibm.hospedagem.service.exception.reservaException.ReservaBadRequestException;
 
 public enum Status {
     CONFIRMADO,
@@ -17,7 +16,7 @@ public enum Status {
                 return status;
             }
         }
-        throw new HospedagemBadRequestException("Status inválido (" + value + ") somente são aceitos os valores CONFIRMADO ou PENDENTE");
+        throw new ReservaBadRequestException("Status inválido (" + value + ") somente são aceitos os valores CONFIRMADO ou PENDENTE");
     }
 
 }

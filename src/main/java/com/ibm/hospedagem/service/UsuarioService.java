@@ -4,5 +4,5 @@ import com.ibm.hospedagem.dto.UsuarioDTO;
 
 public interface UsuarioService {
     UsuarioDTO createUsuario(UsuarioDTO usuarioDTO);
-    UsuarioDTO findById(Long id);
+    UsuarioDTO findUsuarioById(Long id);
 }

@@ -1,41 +1,37 @@
 package com.ibm.hospedagem.model;
 
-import com.ibm.hospedagem.model.enums.Status;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@JsonIgnoreProperties({"reservas"})
 public class Hospedagem implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String nomeHospede;
+    private String titulo;
 
     @Column(nullable = false)
-    private LocalDate dataInicio;
+    private String descricao;
 
     @Column(nullable = false)
-    private LocalDate dataFim;
+    private Double valorDiaria;
 
     @Column(nullable = false)
-    private Integer quantidadePessoas;
+    private List<String> comodidades;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    private Usuario usuario;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Status status;
+    @OneToMany(mappedBy = "hospedagem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reserva> reservas;
 
 }

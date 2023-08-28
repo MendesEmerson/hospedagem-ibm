@@ -20,7 +20,7 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     ResponseEntity<UsuarioDTO> findById(@PathVariable Long id) {
-        UsuarioDTO findUsuario = usuarioService.findById(id);
+        UsuarioDTO findUsuario = usuarioService.findUsuarioById(id);
         return ResponseEntity.ok(findUsuario);
     }
 
