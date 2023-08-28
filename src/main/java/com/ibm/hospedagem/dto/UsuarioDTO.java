@@ -7,8 +7,8 @@ import java.util.List;
 
 public record UsuarioDTO(
         @NotBlank Long id,
-        @NotBlank String username,
-        @NotBlank String password,
-        List<Reserva> hospedagens
+        @NotBlank String usuario,
+        @NotBlank String senha,
+        List<Reserva> reservas
 ) {
 }

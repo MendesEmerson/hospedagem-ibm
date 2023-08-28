@@ -1,6 +1,8 @@
 package com.ibm.hospedagem.controller;
 
 import com.ibm.hospedagem.dto.ReservaDTO;
+import com.ibm.hospedagem.model.Hospedagem;
+import com.ibm.hospedagem.model.Reserva;
 import com.ibm.hospedagem.model.Usuario;
 import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.service.ReservaService;
@@ -14,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -44,6 +47,15 @@ class ReservaControllerTest {
 
     );
 
+    Hospedagem hospedagem = new Hospedagem(
+            1l,
+            "Titulo",
+            "descrição",
+            157.00,
+            new ArrayList<String>(),
+            new ArrayList<Reserva>()
+    );
+
     ReservaDTO hospedagemDTO = new ReservaDTO(
             1L,
             "Novo Nome",
@@ -51,13 +63,14 @@ class ReservaControllerTest {
             LocalDate.now().plusDays(3),
             2,
             usuario,
-            Status.CONFIRMADO
+            Status.CONFIRMADO,
+            hospedagem
     );
 
     @Test
     void testCreateHospedagem() throws Exception {
 
-        when(reservaService.createHospedagem(any())).thenReturn(hospedagemDTO);
+        when(reservaService.createReserva(any())).thenReturn(hospedagemDTO);
 
         mockMvc.perform(post("/reservas")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -1,10 +1,16 @@
 package com.ibm.hospedagem.service.serviceimpl;
 
+import com.ibm.hospedagem.dto.HospedagemDTO;
 import com.ibm.hospedagem.dto.ReservaDTO;
+import com.ibm.hospedagem.dto.UsuarioDTO;
+import com.ibm.hospedagem.model.Hospedagem;
 import com.ibm.hospedagem.model.Reserva;
+import com.ibm.hospedagem.model.Usuario;
 import com.ibm.hospedagem.model.enums.Status;
 import com.ibm.hospedagem.repository.ReservaRepository;
+import com.ibm.hospedagem.service.HospedagemService;
 import com.ibm.hospedagem.service.ReservaService;
+import com.ibm.hospedagem.service.UsuarioService;
 import com.ibm.hospedagem.service.exception.reservaException.ReservaBadRequestException;
 import com.ibm.hospedagem.service.exception.reservaException.ReservaNotFoundException;
 import lombok.AllArgsConstructor;
@@ -12,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,8 +28,15 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class ReservaServiceImpl implements ReservaService {
 
+
     @Autowired
     private final ReservaRepository reservaRepository;
+
+    @Autowired
+    private final HospedagemService hospedagemService;
+
+    @Autowired
+    private final UsuarioService usuarioService;
 
     @Override
     public List<ReservaDTO> findAll() {
@@ -30,9 +45,6 @@ public class ReservaServiceImpl implements ReservaService {
 
     @Override
     public List<ReservaDTO> findByStatus(Status status) {
-        if (status == null) {
-            throw new ReservaBadRequestException("O valor não pode ser nulo");
-        }
 
         if (status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
             return reservaRepository.findByStatus(status).stream().map(this::toDTO).toList();
@@ -70,116 +82,101 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     @Override
-    public ReservaDTO createHospedagem(ReservaDTO hospedagemDTO) {
+    public ReservaDTO createReserva(Long hospedagemId, Long usuarioId, ReservaDTO reserva) {
 
-        validarCamposObrigatorios(hospedagemDTO);
+        validarCamposObrigatorios(reserva);
+        var novaReserva = toEntity(reserva);
+        verificarConflitosDeDatas(null, hospedagemId, novaReserva.getDataInicio(), novaReserva.getDataFim());
 
-        verificarConflitosDeDatas(null, hospedagemDTO.dataInicio(), hospedagemDTO.dataFim());
+        var hospedagemDTO = hospedagemService.findHospedagemById(hospedagemId);
+        //mudar busca de usuario para o context da autenticação assim que implementar security
+        var usuarioDTO = usuarioService.findUsuarioById(usuarioId);
+        var hospedagem = hospedagemToEntity(hospedagemDTO);
+        var usuario = usuarioToEntity(usuarioDTO);
 
-        Reserva newHospedagem = toEntity(hospedagemDTO);
-        newHospedagem.setStatus(Status.CONFIRMADO);
+        var valorTotal = calcularValorDaReserva(hospedagem.getValorDiaria(), novaReserva.getDataInicio(), novaReserva.getDataFim());
 
-        Reserva savedHospedagem = reservaRepository.save(newHospedagem);
-        return toDTO(savedHospedagem);
+        novaReserva.setHospedagem(hospedagem);
+        novaReserva.setUsuario(usuario);
+        novaReserva.setValorTotalReserva(valorTotal);
+        novaReserva.setStatus(Status.CONFIRMADO);
+
+        var createReserva = reservaRepository.save(novaReserva);
+        return toDTO(createReserva);
     }
 
     @Override
-    public ReservaDTO updateById(Long id, ReservaDTO hospedagemDTO) {
-        Reserva getHospedagem = reservaRepository.findById(id)
+    public ReservaDTO updateById(Long id, ReservaDTO atualizacaoReserva) {
+
+        validarCamposObrigatorios(atualizacaoReserva);
+        var reserva = toEntity(atualizacaoReserva);
+
+        var reservaAtual = reservaRepository.findById(id)
                 .orElseThrow(() -> new ReservaNotFoundException("Reserva com id " + id + " não encontrada"));
 
-        if (getHospedagem.getStatus().equals(Status.CANCELADO)) {
+        var hospedagemId = reservaAtual.getHospedagem().getId();
+
+        verificarConflitosDeDatas(id, hospedagemId, reserva.getDataInicio(), reserva.getDataFim());
+
+        if (reservaAtual.getStatus().equals(Status.CANCELADO)) {
             throw new ReservaBadRequestException("Reserva cancelada, não é possivel fazer alterações em reservas que foram canceladas no sistema");
         }
 
-        validarCamposObrigatorios(hospedagemDTO);
-
-        LocalDate dataInicioNovaHospedagem = hospedagemDTO.dataInicio();
-        LocalDate dataFimNovaHospedagem = hospedagemDTO.dataFim();
-
-        if (!dataInicioNovaHospedagem.equals(getHospedagem.getDataInicio())
-                || !dataFimNovaHospedagem.equals(getHospedagem.getDataFim())) {
-            verificarConflitosDeDatas(id, dataInicioNovaHospedagem, dataFimNovaHospedagem);
+        if (atualizacaoReserva.status().equals(Status.CANCELADO)) {
+            throw new ReservaBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reservaAtual vá para area de exclusão.");
         }
 
-        if (!hospedagemDTO.nomeHospede().equals(getHospedagem.getNomeHospede())) {
-            getHospedagem.setNomeHospede(hospedagemDTO.nomeHospede());
-        }
-        if (!hospedagemDTO.dataInicio().equals(getHospedagem.getDataInicio())) {
-            getHospedagem.setDataInicio(hospedagemDTO.dataInicio());
-        }
-        if (!hospedagemDTO.dataFim().equals(getHospedagem.getDataFim())) {
-            getHospedagem.setDataFim(hospedagemDTO.dataFim());
-        }
-        if (!hospedagemDTO.status().equals(getHospedagem.getStatus())) {
-            Status newStatus = hospedagemDTO.status();
-            if (newStatus.equals(Status.CONFIRMADO) || newStatus.equals(Status.PENDENTE)) {
-                getHospedagem.setStatus(newStatus);
-            }
-            if (newStatus.equals(Status.CANCELADO)) {
-                throw new ReservaBadRequestException("Você não pode alterar o status para cancelado, se desejar cancelar sua reserva vá para area de exclusão.");
-            }
-        }
-        if (!hospedagemDTO.quantidadePessoas().equals(getHospedagem.getQuantidadePessoas())) {
-            getHospedagem.setQuantidadePessoas(hospedagemDTO.quantidadePessoas());
-        }
+        reservaAtual.setNomeHospede(reserva.getNomeHospede());
+        reservaAtual.setDataInicio(reserva.getDataInicio());
+        reservaAtual.setDataFim(reserva.getDataFim());
+        reservaAtual.setQuantidadePessoas(reserva.getQuantidadePessoas());
+        reservaAtual.setStatus(reserva.getStatus());
 
-        reservaRepository.save(getHospedagem);
+        reservaRepository.save(reservaAtual);
 
-        return toDTO(getHospedagem);
+        return toDTO(reservaAtual);
     }
 
 
     @Override
     public ReservaDTO deleteById(Long id) {
-        Reserva hospedagem = reservaRepository.findById(id)
+        Reserva reserva = reservaRepository.findById(id)
                 .orElseThrow(() -> new ReservaNotFoundException("Impossivel deletar reserva. Reserva com id " + id + " não encontrada"));
 
-        if (hospedagem.getStatus().equals(Status.CANCELADO)) {
+        if (reserva.getStatus().equals(Status.CANCELADO)) {
             throw new ReservaBadRequestException("Essa reserva já esta cancelada no sistema");
         }
 
-        hospedagem.setStatus(Status.CANCELADO);
-        reservaRepository.save(hospedagem);
+        reserva.setStatus(Status.CANCELADO);
+        reservaRepository.save(reserva);
 
-        return toDTO(hospedagem);
-        //hospedagemRepository.deleteById(hospedagem.getId());
+        return toDTO(reserva);
+        //hospedagemRepository.deleteById(reserva.getId());
     }
 
-    private ReservaDTO toDTO(Reserva hospedagem) {
-        return new ReservaDTO(
-                hospedagem.getId(),
-                hospedagem.getNomeHospede(),
-                hospedagem.getDataInicio(),
-                hospedagem.getDataFim(),
-                hospedagem.getQuantidadePessoas(),
-                hospedagem.getUsuario(),
-                hospedagem.getStatus()
-        );
-    }
+    private void validarCamposObrigatorios(ReservaDTO reservaDTO) {
+        if (reservaDTO.nomeHospede() == null || reservaDTO.nomeHospede().isBlank()) {
+            throw new ReservaBadRequestException("Campo [Nome Hospede] não foi preenchido corretamente");
+        }
+        if (reservaDTO.dataInicio() == null) {
+            throw new ReservaBadRequestException("Campo [Data Inicial] não foi preenchido corretamente");
+        }
+        if (reservaDTO.dataFim() == null) {
+            throw new ReservaBadRequestException("Campo [Data Final] não foi preenchido corretamente");
+        }
+        if (reservaDTO.quantidadePessoas() == null || reservaDTO.quantidadePessoas() <= 0) {
+            throw new ReservaBadRequestException("Campo [Quantidade de Pessoas] não foi preenchido corretamente");
+        }
 
-    private Reserva toEntity(ReservaDTO hospedagemDTO) {
-        return new Reserva(
-                hospedagemDTO.id(),
-                hospedagemDTO.nomeHospede(),
-                hospedagemDTO.dataInicio(),
-                hospedagemDTO.dataFim(),
-                hospedagemDTO.quantidadePessoas(),
-                hospedagemDTO.usuario(),
-                hospedagemDTO.status()
-        );
-    }
-
-    private void validarCamposObrigatorios(ReservaDTO hospedagemDTO) {
-        if (hospedagemDTO.nomeHospede() == null || hospedagemDTO.nomeHospede().isBlank()
-                || hospedagemDTO.dataInicio() == null
-                || hospedagemDTO.dataFim() == null
-                || hospedagemDTO.quantidadePessoas() == null || hospedagemDTO.quantidadePessoas() <= 0) {
-            throw new ReservaBadRequestException("Campos obrigatórios não preenchidos corretamente");
+        try {
+            LocalDate.parse(reservaDTO.dataInicio());
+            LocalDate.parse(reservaDTO.dataFim());
+        } catch (DateTimeParseException e) {
+            throw new ReservaBadRequestException("Campo [Data Inicial] ou [Data Final] não foi preenchido corretamente");
         }
     }
 
-    private void verificarConflitosDeDatas(Long id, LocalDate dataInicio, LocalDate dataFim) {
+    private void verificarConflitosDeDatas(Long reserva_Id, Long hospedagem_Id, LocalDate dataInicio, LocalDate dataFim) {
         LocalDate dataAtual = LocalDate.now();
 
         if (dataInicio.isBefore(dataAtual)) {
@@ -194,23 +191,76 @@ public class ReservaServiceImpl implements ReservaService {
             throw new ReservaBadRequestException("É necessário fazer reservas de no mínimo 1 dia.");
         }
 
-        List<Reserva> hospedagensConflitantes = reservaRepository.findAll();
+        var hospedagem = hospedagemService.findHospedagemById(hospedagem_Id);
+        List<Reserva> hospedagensConflitantes = hospedagem.reservas();
 
-        for (Reserva hospedagem : hospedagensConflitantes) {
-            if (hospedagem.getStatus() == Status.CANCELADO) {
+        for (Reserva reserva : hospedagensConflitantes) {
+            if (reserva.getStatus() == Status.CANCELADO) {
                 continue;
             }
 
-            LocalDate reservaInicio = hospedagem.getDataInicio();
-            LocalDate reservaFim = hospedagem.getDataFim();
+            LocalDate reservaInicio = reserva.getDataInicio();
+            LocalDate reservaFim = reserva.getDataFim();
 
             if (dataInicio.isBefore(reservaFim) && dataFim.isAfter(reservaInicio)) {
-                if (!hospedagem.getId().equals(id)) {
+                if (!reserva.getId().equals(reserva_Id)) {
                     throw new ReservaBadRequestException("Conflito de datas. Já existe(m) reserva(s) para o período selecionado.");
                 }
             }
         }
     }
 
+    private double calcularValorDaReserva(Double valorDiaria, LocalDate dataInicio, LocalDate dataFim) {
+        long diasTotaisDeViagem = ChronoUnit.DAYS.between(dataInicio, dataFim);
+        return valorDiaria * diasTotaisDeViagem;
+    }
+
+    private ReservaDTO toDTO(Reserva reserva) {
+        return new ReservaDTO(
+                reserva.getId(),
+                reserva.getNomeHospede(),
+                reserva.getDataInicio().toString(),
+                reserva.getDataFim().toString(),
+                reserva.getQuantidadePessoas(),
+                reserva.getValorTotalReserva(),
+                reserva.getStatus(),
+                reserva.getHospedagem(),
+                reserva.getUsuario()
+        );
+    }
+
+    private Reserva toEntity(ReservaDTO reservaDTO) {
+        return new Reserva(
+                reservaDTO.id(),
+                reservaDTO.nomeHospede(),
+                LocalDate.parse(reservaDTO.dataInicio()),
+                LocalDate.parse(reservaDTO.dataFim()),
+                reservaDTO.quantidadePessoas(),
+                reservaDTO.valorTotalReserva(),
+                reservaDTO.status(),
+                reservaDTO.hospedagem(),
+                reservaDTO.usuario()
+        );
+    }
+
+    private Hospedagem hospedagemToEntity(HospedagemDTO hospedagemDTO) {
+        return new Hospedagem(
+                hospedagemDTO.id(),
+                hospedagemDTO.titulo(),
+                hospedagemDTO.descricao(),
+                hospedagemDTO.valorDiaria(),
+                hospedagemDTO.comodidades(),
+                hospedagemDTO.reservas()
+        );
+    }
+
+    private Usuario usuarioToEntity(UsuarioDTO usuarioDTO) {
+        return new Usuario(
+                usuarioDTO.id(),
+                usuarioDTO.usuario(),
+                usuarioDTO.senha(),
+                usuarioDTO.reservas()
+        );
+    }
 
 }

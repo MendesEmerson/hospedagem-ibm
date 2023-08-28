@@ -1,5 +1,7 @@
 package com.ibm.hospedagem.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ibm.hospedagem.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,11 +33,20 @@ public class Reserva implements Serializable {
     @Column(nullable = false)
     private Integer quantidadePessoas;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    private Usuario usuario;
+    @Column(nullable = false)
+    private Double valorTotalReserva;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
+
+    @ManyToOne
+    @JsonIgnore
+    private Hospedagem hospedagem;
+
+    @ManyToOne
+    @JsonIgnore
+    private Usuario usuario;
+
 
 }

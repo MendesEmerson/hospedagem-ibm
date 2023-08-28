@@ -12,8 +12,8 @@ public interface ReservaService {
     List<ReservaDTO> findByStatus(Status status);
     List<LocalDate> findDiasIndisponiveis();
     ReservaDTO findById(Long id);
-    ReservaDTO createHospedagem(ReservaDTO hospedagemDTO);
-    ReservaDTO updateById(Long id, ReservaDTO hospedagemDTO);
+    ReservaDTO createReserva(Long hospedagemId, Long usuarioId, ReservaDTO reservaDTO);
+    ReservaDTO updateById(Long id, ReservaDTO reservaDTO);
     ReservaDTO deleteById(Long id);
 
 }
