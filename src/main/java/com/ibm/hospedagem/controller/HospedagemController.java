@@ -6,10 +6,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -23,11 +20,29 @@ public class HospedagemController {
     private final HospedagemService hospedagemService;
 
     @PostMapping
-    ResponseEntity<HospedagemDTO> createHospedagem(@RequestBody HospedagemDTO hospedagemDTO) {
+    ResponseEntity<HospedagemDTO> createHospedagem(@RequestBody @Valid HospedagemDTO hospedagemDTO) {
         HospedagemDTO newHospedagem = hospedagemService.createHospedagem(hospedagemDTO);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(newHospedagem.id()).toUri();
         return ResponseEntity.created(uri).body(newHospedagem);
+    }
+
+    @GetMapping("/{id}")
+    ResponseEntity<HospedagemDTO> FindHospedegamById(@PathVariable Long id){
+        HospedagemDTO hospedagem = hospedagemService.findHospedagemById(id);
+        return ResponseEntity.ok(hospedagem);
+    }
+
+    @PutMapping("/{id}")
+    ResponseEntity<HospedagemDTO> updateHospedagemById(@PathVariable Long id, @RequestBody HospedagemDTO hospedagemDTO) {
+        HospedagemDTO hospedagemUpdate = hospedagemService.updateHospedagemById(id, hospedagemDTO);
+        return ResponseEntity.ok(hospedagemUpdate);
+    }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> deleteHospedagemById(@PathVariable Long id) {
+         hospedagemService.deleteById(id);
+         return ResponseEntity.noContent().build();
     }
 
 }
