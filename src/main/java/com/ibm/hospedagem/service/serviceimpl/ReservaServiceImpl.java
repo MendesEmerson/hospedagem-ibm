@@ -49,7 +49,7 @@ public class ReservaServiceImpl implements ReservaService {
         if (status.equals(Status.CONFIRMADO) || status.equals(Status.PENDENTE) || status.equals(Status.CANCELADO)) {
             return reservaRepository.findByStatus(status).stream().map(this::toDTO).toList();
         } else {
-            throw new ReservaBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU DELETADO!");
+            throw new ReservaBadRequestException("Status selecionado invalido (" + status + "), os Status permitidos são: CONFIRMADO, PENDENTE OU CANCELADO!");
         }
     }
 
@@ -117,6 +117,8 @@ public class ReservaServiceImpl implements ReservaService {
         var hospedagemId = reservaAtual.getHospedagem().getId();
 
         verificarConflitosDeDatas(id, hospedagemId, reserva.getDataInicio(), reserva.getDataFim());
+        var valorDiarioHospedagem = reservaAtual.getHospedagem().getValorDiaria();
+        var valorReserva = calcularValorDaReserva(valorDiarioHospedagem, reserva.getDataInicio(), reserva.getDataFim());
 
         if (reservaAtual.getStatus().equals(Status.CANCELADO)) {
             throw new ReservaBadRequestException("Reserva cancelada, não é possivel fazer alterações em reservas que foram canceladas no sistema");
@@ -130,6 +132,7 @@ public class ReservaServiceImpl implements ReservaService {
         reservaAtual.setDataInicio(reserva.getDataInicio());
         reservaAtual.setDataFim(reserva.getDataFim());
         reservaAtual.setQuantidadePessoas(reserva.getQuantidadePessoas());
+        reservaAtual.setValorTotalReserva(valorReserva);
         reservaAtual.setStatus(reserva.getStatus());
 
         reservaRepository.save(reservaAtual);
