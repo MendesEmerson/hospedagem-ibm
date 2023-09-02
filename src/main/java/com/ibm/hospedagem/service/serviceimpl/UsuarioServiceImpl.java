@@ -38,22 +38,27 @@ public class UsuarioServiceImpl implements UsuarioService {
         return toDTO(usuario);
     }
 
-    private UsuarioDTO toDTO(Usuario usuario) {
-        return new UsuarioDTO(
-                usuario.getId(),
-                usuario.getUsuario(),
-                usuario.getSenha(),
-                usuario.getReservas()
-        );
+    @Override
+    public UsuarioDTO updateUsuarioById(Long id, UsuarioDTO usuarioDTO) {
+        verificarCamposObrigatorios(usuarioDTO);
+        Usuario atualizarUsuario = toEntity(usuarioDTO);
+
+        Usuario usuarioAtual = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UsuarioBadRequestException("Usuario com o ID " + id + " Não encontrado"));
+
+        usuarioAtual.setUsuario(atualizarUsuario.getUsuario());
+        usuarioAtual.setSenha(atualizarUsuario.getSenha());
+
+        usuarioRepository.save(usuarioAtual);
+
+        return toDTO(usuarioAtual);
     }
 
-    private Usuario toEntity(UsuarioDTO usuarioDTO) {
-        return new Usuario(
-                usuarioDTO.id(),
-                usuarioDTO.usuario(),
-                usuarioDTO.senha(),
-                usuarioDTO.reservas()
-        );
+    @Override
+    public void deleteUsuarioById(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UsuarioBadRequestException("Usuario com o ID " + id + " Não encontrado"));
+        usuarioRepository.deleteById(usuario.getId());
     }
 
     private void verificarCamposObrigatorios(UsuarioDTO usuarioDTO) {
@@ -71,5 +76,23 @@ public class UsuarioServiceImpl implements UsuarioService {
         } else if (usuarioDTO.senha().length() < 6 || usuarioDTO.senha().length() > 16) {
             throw new UsuarioBadRequestException(" o campo (senha) deve conter entre 6 e 15 caracteres");
         }
+    }
+
+    private UsuarioDTO toDTO(Usuario usuario) {
+        return new UsuarioDTO(
+                usuario.getId(),
+                usuario.getUsuario(),
+                usuario.getSenha(),
+                usuario.getReservas()
+        );
+    }
+
+    private Usuario toEntity(UsuarioDTO usuarioDTO) {
+        return new Usuario(
+                usuarioDTO.id(),
+                usuarioDTO.usuario(),
+                usuarioDTO.senha(),
+                usuarioDTO.reservas()
+        );
     }
 }
